@@ -1,29 +1,51 @@
+x-cass-common: &cass-common
+  image: cassandra:4.1           
+  environment: &cass-env
+    CASSANDRA_CLUSTER_NAME: anti-interrupt
+    CASSANDRA_SEEDS: cass1
+    CASSANDRA_NUM_TOKENS: 16
+    CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+    # STABLE LAB #
+    MAX_HEAP_SIZE: 128M
+    HEAP_NEWSIZE: 24M
+
+# Hardcoded tokens for determinism
 services:
   cass1:
-    image: cassandra:4.1
-    environment:
-      - CASSANDRA_CLUSTER_NAME=anti-interrupt
-      - CASSANDRA_SEEDS=cass1
-      - MAX_HEAP_SIZE=1G
-      - HEAP_NEWSIZE=200M
+    <<: *cass-common
+    container_name: cass1
+    hostname: cass1
     ports: ["9042:9042"]
+    environment:
+      <<: *cass-env
+    # Healthy when cass1 node is Up and Normal
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$(nodetool status | grep -c '^UN')\" -ge 1"]
 
   cass2:
-    image: cassandra:4.1
-    environment:
-      - CASSANDRA_CLUSTER_NAME=anti-interrupt
-      - CASSANDRA_SEEDS=cass1
-      - MAX_HEAP_SIZE=1G
-      - HEAP_NEWSIZE=200M
-    depends_on: [cass1]
+    <<: *cass-common
+    container_name: cass2
+    hostname: cass2
     ports: ["9043:9042"]
+    environment:
+      <<: *cass-env
+    depends_on:
+      cass1: { condition: service_healthy }
+    # Healthy when cass1 & cass2 nodes are Up and Normal (passes only when 2 lines include UN)
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$(nodetool status | grep -c '^UN')\" -ge 2"]
 
   cass3:
-    image: cassandra:4.1
-    environment:
-      - CASSANDRA_CLUSTER_NAME=anti-interrupt
-      - CASSANDRA_SEEDS=cass1
-      - MAX_HEAP_SIZE=1G
-      - HEAP_NEWSIZE=200M
-    depends_on: [cass1]
+    <<: *cass-common
+    container_name: cass3
+    hostname: cass3
     ports: ["9044:9042"]
+    environment:
+      <<: *cass-env
+    depends_on:
+      cass2: { condition: service_healthy }
+      cass3: { condition: service_healthy }
+    # Healthy when all 3 nodes succesfully joined the cluster
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$(nodetool status | grep -c '^UN')\" -ge 3"]
+

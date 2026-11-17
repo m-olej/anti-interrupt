@@ -73,3 +73,8 @@ root/
 └── api/                        # optional: .proto files (might be nice to let the arbiter and tui communicate via gRPC for throughput maximalization :) )
 └── v1/*.proto
 ```
+
+**Commands**:
+
+- `make`: shows available make commands (get_deps, build, run)
+- `docker compose up -d --wait`: deploys cassandra container cluster, --wait signals to exit the command only after the last container has joined the cluster
