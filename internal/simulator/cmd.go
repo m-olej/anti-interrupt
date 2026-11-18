@@ -41,11 +41,11 @@ func NewCommand() *cobra.Command {
 // Run is the real entry point for the simulator. For now it's a stub that
 // blocks until cancellation, so we can verify the plumbing.
 func Run(ctx context.Context, cfg Config) error {
-    log := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("service", "simulator")
+    jsonLog := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("service", "simulator")
 
 	if !slices.Contains([]string{"random", "fairness", "races"}, cfg.Mode) {return fmt.Errorf("Unsupported mode type: %s", cfg.Mode)}
 
-    log.Info("starting",
+    jsonLog.Info("starting",
         "rooms", cfg.Rooms,
         "users_per_room", cfg.UsersPerRoom,
         "freq", cfg.FrequencyHz,
@@ -53,7 +53,7 @@ func Run(ctx context.Context, cfg Config) error {
     )
 
     <-ctx.Done() // wait for Ctrl-C / SIGTERM
-    log.Info("shutting down")
+    slog.Info("shutting down")
     return nil
 }
 

@@ -75,6 +75,10 @@ root/
 ```
 
 **Commands**:
+- `backend [host] [port] [`: start backend with default values
 
-- `make`: shows available make commands (get_deps, build, run)
+*Helpers*:
+- `make`: build app
 - `docker compose up -d --wait`: deploys cassandra container cluster, --wait signals to exit the command only after the last container has joined the cluster
+- `make cqlsh`: connect to cassandra cluster
+- `make connect`: connect to app keyspace

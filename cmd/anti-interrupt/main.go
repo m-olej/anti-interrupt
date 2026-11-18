@@ -20,7 +20,7 @@ func main() {
     defer stop()
 
     root := &cobra.Command{
-        Use:           "app",
+        Use:           "anti-interrupt [service]",
         Short:         "Anti-Interrupt Conference Call System",
         SilenceUsage:  true, // don't dump usage on every runtime error
         SilenceErrors: true, // we log errors ourselves
@@ -34,7 +34,7 @@ func main() {
     )
 
     if err := root.ExecuteContext(ctx); err != nil {
-        slog.Error("fatal", "err", err)
+        slog.Error("Fatal error", "error", err)
         os.Exit(1)
     }
 }

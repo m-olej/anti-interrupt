@@ -44,8 +44,6 @@ services:
       <<: *cass-env
     depends_on:
       cass2: { condition: service_healthy }
-      cass3: { condition: service_healthy }
     # Healthy when all 3 nodes succesfully joined the cluster
     healthcheck:
       test: ["CMD-SHELL", "test \"$(nodetool status | grep -c '^UN')\" -ge 3"]
-

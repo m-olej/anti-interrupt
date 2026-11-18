@@ -3,7 +3,6 @@ package tui
 import (
     "context"
     "log/slog"
-    "os"
 
     "github.com/spf13/cobra"
 )
@@ -23,10 +22,9 @@ func NewCommand() *cobra.Command {
 }
 
 func Run(ctx context.Context, _ Config) error {
-    log := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("service", "tui")
-    log.Info("starting")
+    slog.Info("starting")
     <-ctx.Done()
-    log.Info("shutting down")
+    slog.Info("shutting down")
     return nil
 }
 
