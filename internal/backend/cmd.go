@@ -1,12 +1,7 @@
 package backend
 
 import (
-    "context"
-    "log/slog"
-
-    "github.com/spf13/cobra"
-
-	"anti-interrupt/internal/schema"
+	"github.com/spf13/cobra"
 )
 
 type Config struct{
@@ -46,19 +41,4 @@ func NewCommand() *cobra.Command {
         },
     }
     return cmd
-}
-
-func Run(ctx context.Context, cfg Config) error {
-    slog.Info("Starting")
-
-	slog.Info("Running migrations")
-
-	err := schema.BootstrapKeyspace(cfg.nodes, cfg.keyspace, cfg.rf); if err != nil {
-		return err
-	}
-	schema.Migrate(cfg.nodes, cfg.keyspace)
-
-    <-ctx.Done()
-    slog.Info("Shutting down")
-    return nil
 }

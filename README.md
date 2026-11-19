@@ -74,8 +74,10 @@ root/
 └── v1/*.proto
 ```
 
-**Commands**:
-- `backend [host] [port] [`: start backend with default values
+--- 
+
+# **Commands**:
+- `backend`: start backend with default values
 
 *Helpers*:
 - `make`: build app
