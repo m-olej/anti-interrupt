@@ -175,7 +175,7 @@ CREATE TABLE room_call_counters (
 ## Program structure
 
 ### Call simulator
-> Doesn't interact with Cassandra
+> Helper for testing without restarting (keeping benchmark data live in the server)
 
 **Parameters**:
 - *rooms*: number of conference rooms 
@@ -186,23 +186,21 @@ CREATE TABLE room_call_counters (
     - *fairness*: shows priority management (no domiminant speaker)
     - *random*: truly random 
 
-**Modules**:
-1. Spawner (goroutine lifetime, communication api)
-    - orchestrates goroutines
-2. Scheduler (modes implemented here)
-    - dictates goroutine activity (start speaking, stop speaking)
-2. Logger (comparing against database, debugging)
-
 ### Auditor
 > Core Backend API, receives all events from `Call simulator`
 
 **Modules**:
 1. Database interface
-2. HTTP/gRPC server
+2. Simple HTTP server
 3. Statistics (polling, deduplicating and summarizing cassandra data)
     - Active speaker
     - Room speaker turns with intervals (who: start stop)
     - room audio statistics (if using realistic metadata)
+1. Spawner (goroutine lifetime, communication api)
+    - orchestrates goroutines
+5. Scheduler (modes implemented here)
+    - dictates goroutine activity (start speaking, stop speaking)
+6. Logger (comparing against database, debugging)
 
 ### TUI 
 > Visualization frontend
