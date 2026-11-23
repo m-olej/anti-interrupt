@@ -10,8 +10,10 @@ import (
 // 2-phase migration:
 // 	1. Bootstrap keyspace -> create keyspace in an un-anchored session
 //	2. Migrate schema -> requires the session to be attached to keyspace
-func BootstrapKeyspace(nodes []string, keyspace string, replication_factor int) error {
+func bootstrapKeyspace(nodes []string, keyspace string, replication_factor int) error {
+
 	slog.Info("[Bootstraping] Connecting to cluster")
+
 	boot, err := gocql.NewCluster(nodes...).CreateSession(); if err != nil {
 		slog.Error(fmt.Sprintf("Couldn't connect to cluster at: %v", nodes))
 		return err

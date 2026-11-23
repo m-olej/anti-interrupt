@@ -85,6 +85,7 @@ A story is not done until:
 # Epic 0 — Foundations
 
 ## US-001 — Load, merge, and validate configuration
+> DONE
 
 **Priority:** P0 · **Depends on:** none
 
@@ -113,6 +114,10 @@ run silently uses zero values. Without a reliable config layer, no benchmark res
 **Done when.** No flag is registered inside a `RunE`; invalid config exits non-zero with all errors;
 the effective config is logged at startup; a scenario file and equivalent flags produce identical
 behavior.
+
+**Note**:
+- extensive tests are unnecessary, would waste time mocking
+- added clean migration command
 
 ---
 

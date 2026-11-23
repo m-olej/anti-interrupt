@@ -1,4 +1,4 @@
-package backend
+package agent
 
 import (
 	"context"
@@ -10,33 +10,26 @@ import (
 	"strconv"
 	"time"
 
-	"anti-interrupt/internal/schema"
+	"anti-interrupt/internal/config"
 )
 
-func Run(ctx context.Context, cfg Config) error {
+func Run(ctx context.Context, agentCfg config.AgentConfig, cassCfg config.CassandraConfig) error {
 	log := slog.With("service", "backend")
 
     log.Info("Starting")
-
-	// Bootstrapping & migrations
-	log.Info("Running migrations")
-
-	err := schema.BootstrapKeyspace(cfg.nodes, cfg.keyspace, cfg.rf); if err != nil {
-		return err
-	}
-	schema.Migrate(cfg.nodes, cfg.keyspace)
 
 	// Routing
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", RootHandler)
 
 	srv := &http.Server {
-		Addr: net.JoinHostPort(cfg.host, strconv.Itoa(cfg.port)),
+		Addr: net.JoinHostPort(agentCfg.Address, strconv.Itoa(agentCfg.Port)),
 		Handler: mux,
 	}
 
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.ListenAndServe() }()
+
 
 	log.Info("Listening", "addr", srv.Addr)
 
@@ -54,7 +47,7 @@ func Run(ctx context.Context, cfg Config) error {
 	shutdownCtx, cancel := context.WithTimeout(ctx, 10 * time.Second)
 	defer cancel()
 	
-	err = srv.Shutdown(shutdownCtx); if err != nil {
+	err := srv.Shutdown(shutdownCtx); if err != nil {
 		srv.Close()
 		return fmt.Errorf("Shutdown: %w", err)
 	}

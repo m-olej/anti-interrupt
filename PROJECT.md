@@ -319,10 +319,6 @@ CREATE TABLE audio_telemetry (
   PRIMARY KEY ((room_id, minute_bucket), frame_ts, user_id)
 ) WITH CLUSTERING ORDER BY (frame_ts DESC, user_id ASC);
 
--- Optional "realistic" profile (separate migration; not baseline):
---   rms_energy double, fundamental_freq double, zcr double,
---   snr_margin double, vad_confidence float
-
 -- A2/A3: append-only floor claims. New turn_seq per turn; no DELETE.
 CREATE TABLE floor_claims (
   room_id           text,
@@ -331,7 +327,6 @@ CREATE TABLE floor_claims (
   claim_ts          bigint,     -- client microseconds; may be skewed
   user_id           text,
   claim_status      text,       -- CLAIMING | SPEAKING | QUEUED | RELEASED
-  invariant_payload text,       -- atomic JSON {user, noise_db, gain}
   PRIMARY KEY ((room_id), turn_seq, priority_tier, claim_ts, user_id)
 ) WITH CLUSTERING ORDER BY (turn_seq DESC, priority_tier ASC, claim_ts ASC, user_id ASC);
 
@@ -343,22 +338,6 @@ CREATE TABLE floor_heartbeats (
   seen_at   timestamp,
   PRIMARY KEY ((room_id), turn_seq, user_id)
 ) WITH default_time_to_live = 2;
-
--- A4: deliberately vulnerable table for the torn-row demonstration.
-CREATE TABLE room_active_state_naive (
-  room_id            text PRIMARY KEY,
-  active_user_id     text,
-  noise_threshold_db double,
-  inverse_gain_db    double      -- invariant: noise_threshold_db + inverse_gain_db == 0
-);
-
--- A4: corrected table. Coupled invariant lives in one atomic cell.
-CREATE TABLE room_active_state (
-  room_id            text PRIMARY KEY,
-  turn_seq           int,
-  speaker_state_json text,       -- {"user":..., "noise_db":..., "gain":...}
-  updated_at         timestamp
-);
 
 -- A6: bounded collection history (list + map demonstration).
 CREATE TABLE speaker_profiles (
@@ -376,7 +355,6 @@ CREATE TABLE completed_speech_turns (
   user_id    text,
   turn_id    uuid,
   duration_ms int,
-  avg_rms_db double,            -- optional/realistic profile
   PRIMARY KEY ((room_id, user_id), turn_id)
 );
 
@@ -720,6 +698,7 @@ deliberately recorded slow scenario.
 | `telemetry_cl` | `ONE` | `ONE` or `QUORUM`; recorded |
 | `batch_frames` / `batch_ms` | 10 / 25 | Telemetry batching |
 | `observe` | true | Observer loop on/off |
+
 
 ### 8.3 Resource caps
 
