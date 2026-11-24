@@ -9,8 +9,8 @@ import (
 
     "github.com/spf13/cobra"
 
-    "anti-interrupt/internal/backend"
-    "anti-interrupt/internal/simulator"
+    "anti-interrupt/internal/agent"
+    "anti-interrupt/internal/schema"
     "anti-interrupt/internal/tui"
 )
 
@@ -28,8 +28,8 @@ func main() {
 
     // Subcommands. Each lives in its own internal/ package.
     root.AddCommand(
-        simulator.NewCommand(),
-        backend.NewCommand(),
+        schema.NewCommand(),
+        agent.NewCommand(),
         tui.NewCommand(),
     )
 
