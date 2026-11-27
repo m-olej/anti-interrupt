@@ -9,6 +9,21 @@ import (
 
 // Table models.
 var (
+	ActiveRoomByUser = table.New(table.Metadata{
+		Name: "active_room_by_user",
+		Columns: []string{
+			"room_id",
+			"since",
+			"state",
+			"turn_seq",
+			"user_id",
+		},
+		PartKey: []string{
+			"user_id",
+		},
+		SortKey: []string{},
+	})
+
 	AudioTelemetry = table.New(table.Metadata{
 		Name: "audio_telemetry",
 		Columns: []string{
@@ -66,6 +81,23 @@ var (
 		},
 	})
 
+	FloorHeartbeats = table.New(table.Metadata{
+		Name: "floor_heartbeats",
+		Columns: []string{
+			"room_id",
+			"seen_at",
+			"turn_seq",
+			"user_id",
+		},
+		PartKey: []string{
+			"room_id",
+		},
+		SortKey: []string{
+			"turn_seq",
+			"user_id",
+		},
+	})
+
 	GocqlxMigrate = table.New(table.Metadata{
 		Name: "gocqlx_migrate",
 		Columns: []string{
@@ -97,9 +129,33 @@ var (
 			"user_id",
 		},
 	})
+
+	SpeakerProfiles = table.New(table.Metadata{
+		Name: "speaker_profiles",
+		Columns: []string{
+			"base_noise_floor_db",
+			"device_metadata",
+			"recent_noise_samples",
+			"room_id",
+			"user_id",
+		},
+		PartKey: []string{
+			"room_id",
+		},
+		SortKey: []string{
+			"user_id",
+		},
+	})
 )
 
 // Table structs.
+type ActiveRoomByUserStruct struct {
+	RoomId  string
+	Since   time.Time
+	State   string
+	TurnSeq int32
+	UserId  string
+}
 type AudioTelemetryStruct struct {
 	EventCategory string
 	FrameTs       time.Time
@@ -121,6 +177,12 @@ type FloorClaimsStruct struct {
 	TurnSeq      int32
 	UserId       string
 }
+type FloorHeartbeatsStruct struct {
+	RoomId  string
+	SeenAt  time.Time
+	TurnSeq int32
+	UserId  string
+}
 type GocqlxMigrateStruct struct {
 	Checksum  string
 	Done      int32
@@ -135,4 +197,10 @@ type RoomCallCountersStruct struct {
 	SpeechFramesCount    int
 	UserId               string
 }
-
+type SpeakerProfilesStruct struct {
+	BaseNoiseFloorDb   float64
+	DeviceMetadata     map[string]string
+	RecentNoiseSamples []float64
+	RoomId             string
+	UserId             string
+}

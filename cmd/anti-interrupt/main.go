@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+
     // One cancellation source for the whole process: Ctrl-C or SIGTERM.
     ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
     defer stop()
@@ -28,9 +29,9 @@ func main() {
 
     // Subcommands. Each lives in its own internal/ package.
     root.AddCommand(
-        schema.NewCommand(),
-        agent.NewCommand(),
-        tui.NewCommand(),
+        schema.NewCommand(), 	// Migrations
+		agent.NewCommand(),		// Client: one-shot & agent
+        tui.NewCommand(),		// TUI
     )
 
     if err := root.ExecuteContext(ctx); err != nil {

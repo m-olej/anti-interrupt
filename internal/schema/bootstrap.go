@@ -18,18 +18,17 @@ func bootstrapKeyspace(nodes []string, keyspace string, replication_factor int) 
 		slog.Error(fmt.Sprintf("Couldn't connect to cluster at: %v", nodes))
 		return err
 	}
+	defer boot.Close()
 
-	err = boot.Query(
-		fmt.Sprintf(
-			`CREATE KEYSPACE IF NOT EXISTS %s WITH REPLICATION = 
-				{'class':'SimpleStrategy','replication_factor':%d}`,
-		keyspace, replication_factor)).Exec()
+	err = boot.Query( // explicit Query, because DDL isn't supported by gocqlx
+		`CREATE KEYSPACE IF NOT EXISTS %s WITH REPLICATION = 
+		{'class':'SimpleStrategy','replication_factor':%d}`,
+		keyspace, replication_factor).Exec()
 	if err != nil {
 		slog.Error(fmt.Sprintf("[Bootstraping] Failed to create keyspace: %s", keyspace), "error", err)
 		return err
 	}
 
-	defer boot.Close()
 
 	slog.Info("[Bootstraping] Bootstrapped succesfully")
 	return nil

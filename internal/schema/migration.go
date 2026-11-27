@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/gocql/gocql"
 	"github.com/scylladb/gocqlx/v3"
 	"github.com/scylladb/gocqlx/v3/migrate"
 
@@ -13,18 +12,9 @@ import (
 )
 
 
-func runMigration(nodes []string, keyspace string) error {
-	cl := gocql.NewCluster(nodes...)
+func runMigration(session gocqlx.Session) error {
 
-	// Anchored session
-	cl.Keyspace = keyspace
-	sess, err := gocqlx.WrapSession(cl.CreateSession()); if err != nil {
-		slog.Error("[Migration] Couldn't create anti_interrupt session")
-		return err
-	}
-	defer sess.Close()
-
-	pending, err := migrate.Pending(context.Background(), sess, cql.Migrations); if err != nil {
+	pending, err := migrate.Pending(context.Background(), session, cql.Migrations); if err != nil {
 		slog.Error("Pending migration error:", "error", err);
 		return err
 	}
@@ -32,7 +22,7 @@ func runMigration(nodes []string, keyspace string) error {
 	migrations := len(pending)
 	if  migrations != 0 {
 		slog.Info(fmt.Sprintf("Applying %d migrations", migrations))
-		if err := migrate.FromFS(context.Background(), sess, cql.Migrations); err != nil {
+		if err := migrate.FromFS(context.Background(), session, cql.Migrations); err != nil {
 			slog.Error("Migration error:", "error", err)
 			return err
 		}
@@ -42,15 +32,7 @@ func runMigration(nodes []string, keyspace string) error {
 	return nil
 }
 
-func truncKeyspace(nodes []string, keyspace string) error {
-
-	cl := gocql.NewCluster(nodes...)
-
-	cl.Keyspace = keyspace
-	sess, err := gocqlx.WrapSession(cl.CreateSession()); if err != nil {
-		return fmt.Errorf("[Migration] Couldn't create anti_interrupt session")
-	}
-	defer sess.Close()
+func truncKeyspace(session gocqlx.Session) error {
 
 	tablesToDrop := []string{
 		"gocqlx_migrate",
@@ -64,7 +46,7 @@ func truncKeyspace(nodes []string, keyspace string) error {
 	}
 	for _, table := range tablesToDrop {
 		stmt := "DROP TABLE IF EXISTS " + table
-		if err := sess.ExecStmt(stmt); err != nil {
+		if err := session.ExecStmt(stmt); err != nil {
 			return fmt.Errorf("Failed to execute: %s", stmt)
 		}
 	}

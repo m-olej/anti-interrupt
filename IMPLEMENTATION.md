@@ -122,6 +122,7 @@ behavior.
 ---
 
 ## US-002 — Single, fatal, versioned migrations
+> Unnecessary 
 
 **Priority:** P0 · **Depends on:** US-001
 
@@ -170,9 +171,9 @@ during incidents, and makes retries unsafe.
 
 **Implementation notes.**
 - New `internal/cassandra` package: build a session from validated config, health-check it at
-  startup, close it on shutdown.
-- Enable token-aware host policy; confirm the coordinator is a replica on a query trace.
-- Configure `NumConns` and `MaxRequestsPerConn` deliberately; document the current defaults.
+  startup, close it on shutdown. X
+- Enable token-aware host policy; confirm the coordinator is a replica on a query trace. X
+- Configure `NumConns` and `MaxRequestsPerConn` deliberately; document the current defaults. X
 - Implement a retry policy that respects per-query idempotency: aggressive capped retries for
   idempotent operations, no blind retries for counters. Jitter all backoff.
 - Set a per-query context deadline in the low-hundreds-of-milliseconds to low-seconds range,

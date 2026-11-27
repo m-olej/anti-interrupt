@@ -1,10 +1,12 @@
 package schema
 
 import (
+	"anti-interrupt/internal/cassandra"
+	"anti-interrupt/internal/config"
 	"context"
 	"log/slog"
-	"anti-interrupt/internal/config"
-    "github.com/spf13/cobra"
+
+	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
@@ -23,6 +25,7 @@ func NewCommand() *cobra.Command {
 		&cassCfg.Nodes, "nodes", defaultnodes, 
 		"Cassandra cluster node address:port pair (repeatable)",
 		)
+	err := cmd.MarkFlagRequired("nodes"); if err != nil { panic(err) }
 
 	cmd.Flags().IntVar(
 		&cassCfg.Replication_factor, "rf", 3, 
@@ -50,23 +53,29 @@ func Run(ctx context.Context, cfg config.CassandraConfig) error {
 		return err
 	}
 
-	if cfg.Reset {
-		err = truncKeyspace(cfg.Nodes, cfg.Keyspace); if err != nil {
-			log.Error("Pre-migration clean error: ", "error", err)
-			return err
-		}
-	}
-
-	// Bootstrapping & migrations
-	log.Info("Running migrations")
-
+	log.Info("[Bootstrap] Creating anti_interrupt Cassandra keyspace")
 	err = bootstrapKeyspace(cfg.Nodes, cfg.Keyspace, cfg.Replication_factor); if err != nil {
 		log.Error("Error during bootstrapping: ", "error", err)
 		return err
 	}
-	err = runMigration(cfg.Nodes, cfg.Keyspace); if err != nil {
-		log.Error("Error during migration: ", "error", err)	
+
+	log.Info("Running migrations")
+	session, err := cassandra.NewSession(cfg); if err != nil {
 		return err
+	}
+
+	// Require the keyspace to exist, bootstap first
+	if cfg.Reset {
+		err = truncKeyspace(session); if err != nil {
+			log.Error("Pre-migration clean error: ", "error", err)
+			return err
+		}
+	} else {
+		err = runMigration(session); if err != nil {
+			log.Error("Error during migration: ", "error", err)	
+			return err
+		}
+
 	}
 
     <-ctx.Done()

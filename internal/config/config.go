@@ -45,30 +45,26 @@ var testModes = map[TestModes]string{
 /// Stress-test run
 type RunConfig struct {
 	// Identification
-	Run_id string		// Generated string(uuid) or provided
-	Client_id string 	// defaults to hostname
+	RunId string		// Generated string(uuid) or provided
+	ClientId string 	// defaults to hostname
 
 	// Parameters
 	Rooms int
-	User_per_room int
+	UserPerRoom int
 	Freq int
-	Test_mode TestModes
+	TestMode string // TestModes
 	Duration int 		// in seconds
 
 	// Additional parameters (have defaults)
-	Clock_offset int	// in milliseconds
-	Delay_ms int		// Claim acquisition stabilization window (Write -> wait -> Read)
+	ClockOffset int	// in milliseconds
 	Seed int64
-	Telemetry_cl gocql.Consistency
-
-	// Client side request batching
-	Batch_frames int 	// either or
-	Batch_ms int		// ^
+	TelemetryCl string
 }
 
 type AgentConfig struct {
 	Address string
 	Port int
+	OneShot RunConfig
 }
 
 type CassandraConfig struct {
@@ -79,7 +75,6 @@ type CassandraConfig struct {
 }
 
 // Types are validated by runtime, complex parsing here
-
 func (cass CassandraConfig) Validate() error{
 
 	if cass.Replication_factor <= 0 {
@@ -89,6 +84,8 @@ func (cass CassandraConfig) Validate() error{
 	if cass.Keyspace != "anti_interrupt" {
 		return fmt.Errorf("Sike, you can't change the keyspace")
 	}
+
+	if len(cass.Nodes) == 0 { return fmt.Errorf("No cassandra address provided") }
 	
 	for node := range cass.Nodes {
 		var curr string
@@ -109,12 +106,44 @@ func (cass CassandraConfig) Validate() error{
 	return nil
 }
 
-func (srv AgentConfig) Validate() error{
-	
+const (
+	ONESHOT = 0x1
+	AGENT = 0x2
+)
+
+// If host parameter is provided, one-shot parameters are ignored
+func RunMode(cfg AgentConfig) uint16 {
+	if cfg.Address != "" {
+		return AGENT
+	} else {
+		return ONESHOT
+	}
+}
+
+func (srv AgentConfig) Validate() error {
+
+	switch RunMode(srv) {
+	// Validate OneShot Config
+	case ONESHOT:
+		_, err := gocql.ParseConsistencyWrapper(srv.OneShot.TestMode); if err != nil {
+			return fmt.Errorf("Invalid consistency parameter value: %s", srv.OneShot.TestMode)
+		}
+
+	// Validate Agent Config
+	case AGENT:
+		// Host & Port variables are typechecked by cobra
+	}
+		
 	return nil
 }
 
 func (runc RunConfig) Validate() error {
+
+	isValid := false
+	for tm := range testModes {
+		if testModes[tm] == runc.TestMode { isValid = true }
+	}
+	if !isValid { return fmt.Errorf("invalid test mode: %s", runc.TestMode) }
 	
 	return nil
 }
